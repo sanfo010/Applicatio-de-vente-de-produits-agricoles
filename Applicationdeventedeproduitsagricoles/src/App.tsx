@@ -1,7 +1,7 @@
 ﻿import { useMemo, useState, useEffect } from 'react'
 import { Routes, Route, NavLink, useNavigate, Navigate } from 'react-router-dom'
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
-import { collection, addDoc, setDoc, getDocs, getDoc, doc, deleteDoc, query, where } from 'firebase/firestore'
+import { collection, addDoc, setDoc, getDocs, getDoc, doc, deleteDoc, query, where, onSnapshot } from 'firebase/firestore'
 import { auth, db, requestNotificationPermission, onMessageListener } from './firebase'
 import './App.css'
 
@@ -66,12 +66,13 @@ type Seller = {
 }
 
 const sellers: Seller[] = [
-  { id: 'seller1', name: 'Ousmane Traoré', location: 'Bamako, Mali', bio: 'Producteur de mangues et légumes locaux' },
-  { id: 'seller2', name: 'Awa Coulibaly', location: 'Sikasso, Mali', bio: 'Spécialiste des céréales biologiques' },
-  { id: 'seller3', name: 'Mahmoud Keita', location: 'Ségou, Mali', bio: 'Légumes de saison et plantains' },
-  { id: 'seller4', name: 'Fanta Diarra', location: 'Mopti, Mali', bio: 'Herbes fraîches et épices traditionnelles' },
-  { id: 'seller5', name: 'Adama Sangho', location: 'Kayes, Mali', bio: 'Fruits exotiques et produits de maraîchage' },
-  { id: 'seller6', name: 'Mariam Cissé', location: 'Mopti, Mali', bio: 'Primeurs locaux et huiles terre-tienne' },
+  { id: 'sanfo', name: 'Sanfo', location: 'Bamako, Mali', bio: 'Producteur de produits agricoles de qualité' },
+  { id: 'seller1', name: 'Pankoro Abdoulye', location: 'Bamako, Mali', bio: 'Producteur de mangues et légumes locaux' },
+  { id: 'seller2', name: 'Ibrahim Traore', location: 'Sikasso, Mali', bio: 'Spécialiste des céréales biologiques' },
+  { id: 'seller3', name: 'Sirafing Keita', location: 'Ségou, Mali', bio: 'Légumes de saison et plantains' },
+  { id: 'seller4', name: 'Nafissatou Abdoulaye', location: 'Mopti, Mali', bio: 'Herbes fraîches et épices traditionnelles' },
+  { id: 'seller5', name: 'Daouda', location: 'Kayes, Mali', bio: 'Fruits exotiques et produits de maraîchage' },
+  { id: 'seller6', name: 'Fagnon', location: 'Mopti, Mali', bio: 'Primeurs locaux et huiles terre-tienne' },
   { id: 'seller7', name: 'Ibrahim Coulibaly', location: 'Tombouctou, Mali', bio: 'Riz de haute qualité et sucreries traditionnelles' },
   { id: 'seller8', name: 'Seydou Diallo', location: 'Gao, Mali', bio: 'Légumes secs et épices artisanales' }
 ]
@@ -98,6 +99,11 @@ const products: Product[] = [
   { id: 18, name: 'Poire', category: 'Fruits', price: 1800, unit: 'kg', image: 'https://via.placeholder.com/120?text=Poire' },
   { id: 19, name: 'Pêche', category: 'Fruits', price: 2200, unit: 'kg', image: 'https://via.placeholder.com/120?text=Pêche' },
   { id: 20, name: 'Abricot', category: 'Fruits', price: 2500, unit: 'kg', image: 'https://via.placeholder.com/120?text=Abricot' },
+  { id: 101, name: 'Tomates Sanfo', category: 'Légumes', price: 1600, unit: 'kg', image: 'https://via.placeholder.com/120?text=Tomates+Sanfo', sellerId: 'sanfo', sellerName: 'Sanfo' },
+  { id: 102, name: 'Mangue Sanfo', category: 'Fruits', price: 2100, unit: 'kg', image: 'https://via.placeholder.com/120?text=Mangue+Sanfo', sellerId: 'sanfo', sellerName: 'Sanfo' },
+  { id: 103, name: 'Riz Sanfo', category: 'Céréales', price: 950, unit: 'kg', image: 'https://via.placeholder.com/120?text=Riz+Sanfo', sellerId: 'sanfo', sellerName: 'Sanfo' },
+  { id: 104, name: 'Huile Sanfo', category: 'Boissons', price: 2600, unit: 'litre', image: 'https://via.placeholder.com/120?text=Huile+Sanfo', sellerId: 'sanfo', sellerName: 'Sanfo' },
+  { id: 105, name: 'Carottes Sanfo', category: 'Légumes', price: 1050, unit: 'kg', image: 'https://via.placeholder.com/120?text=Carottes+Sanfo', sellerId: 'sanfo', sellerName: 'Sanfo' },
   { id: 21, name: 'Cerise', category: 'Fruits', price: 3500, unit: 'kg', image: 'https://via.placeholder.com/120?text=Cerise' },
   { id: 22, name: 'Fraise', category: 'Fruits', price: 4000, unit: 'kg', image: 'https://via.placeholder.com/120?text=Fraise' },
   { id: 23, name: 'Framboise', category: 'Fruits', price: 5000, unit: 'kg', image: 'https://via.placeholder.com/120?text=Framboise' },
@@ -384,21 +390,21 @@ function Home({ cart, addToCart, sellerProducts, currentUser }: { cart: Record<s
       <section className="hero-section">
         <div className="hero-image">
           <div className="hero-overlay">
-            <h2>🍽️ Bienvenue sur votre marché local</h2>
-            <p>Découvrez des produits frais et locaux directement auprès des agriculteurs maliens</p>
+            <h2>� Découvrez l'Excellence Agricole Malienne</h2>
+            <p>Connectez-vous aux meilleurs producteurs locaux et savourez des produits frais, authentiques et durables</p>
           </div>
         </div>
         <div className="hero-text">
-          <h2>Commandez simplement, recevez rapidement</h2>
-          <p>Notre plateforme connecte les meilleurs producteurs maliens avec les consommateurs soucieux de qualité et de fraîcheur.</p>
+          <h2>De la Terre à Votre Table, Instantanément</h2>
+          <p>DUGU-SUGU révolutionne l'agriculture malienne en connectant directement producteurs passionnés et consommateurs exigeants. Qualité, fraîcheur et authenticité garanties.</p>
           <div className="hero-stats">
             <div className="stat-item">
               <span className="stat-number">{sellers.length}</span>
-              <span className="stat-label">Producteurs</span>
+              <span className="stat-label">Producteurs Passionnés</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{allProducts.length}</span>
-              <span className="stat-label">Produits</span>
+              <span className="stat-label">Produits d'Exception</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">24h</span>
@@ -652,23 +658,23 @@ function Login() {
     <main className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <h1>Connexion à DUGU-SUGU</h1>
-          <p>Choisissez votre type de compte pour accéder à la plateforme</p>
+          <h1>Rejoignez Notre Communauté Agricole</h1>
+          <p>Sélectionnez votre profil pour accéder à un monde de saveurs authentiques et de produits d'exception</p>
         </div>
 
         <div className="login-options">
           <div className="login-option-card" onClick={() => navigate('/login/user')}>
             <div className="option-icon">👤</div>
-            <h3>Se connecter en tant que Client</h3>
-            <p>Achetez des produits frais directement auprès des agriculteurs locaux</p>
-            <button className="option-btn">Continuer</button>
+            <h3>Consommateur Engagé</h3>
+            <p>Découvrez et commandez des produits frais issus de l'agriculture durable malienne</p>
+            <button className="option-btn">Explorer le Marché</button>
           </div>
 
           <div className="login-option-card" onClick={() => navigate('/login/seller')}>
             <div className="option-icon">🏪</div>
-            <h3>Se connecter en tant que Vendeur</h3>
-            <p>Gérez vos produits et vendez directement à vos clients</p>
-            <button className="option-btn">Continuer</button>
+            <h3>Producteur Passionné</h3>
+            <p>Présentez vos produits d'exception et développez votre activité commerciale</p>
+            <button className="option-btn">Gérer Ma Boutique</button>
           </div>
         </div>
 
@@ -687,6 +693,39 @@ function LoginUser({ onLogin }: { onLogin: (email: string, password: string) => 
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  const handleBiometricLogin = async () => {
+    if (!navigator.credentials) {
+      setError('Authentification biométrique non supportée sur ce navigateur')
+      return
+    }
+    try {
+      // Mock challenge - in real app, get from server
+      const challenge = new Uint8Array(32)
+      window.crypto.getRandomValues(challenge)
+
+      await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [], // Allow any credential
+          userVerification: 'preferred'
+        }
+      })
+
+      // In real app, send credential to server for verification
+      // For demo, assume success and login with stored email
+      const storedEmail = localStorage.getItem('biometricEmail')
+      const storedPassword = localStorage.getItem('biometricPassword')
+      if (storedEmail && storedPassword) {
+        await onLogin(storedEmail, storedPassword)
+        navigate('/home')
+      } else {
+        setError('Aucune authentification biométrique enregistrée')
+      }
+    } catch (error) {
+      setError('Authentification biométrique échouée: ' + (error as Error).message)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValidEmail(email)) return setError('Email invalide')
@@ -694,6 +733,9 @@ function LoginUser({ onLogin }: { onLogin: (email: string, password: string) => 
     setError('')
     try {
       await onLogin(email, password)
+      // Store for biometric
+      localStorage.setItem('biometricEmail', email)
+      localStorage.setItem('biometricPassword', password)
       navigate('/home')
     } catch (error) {
       setError('Connexion impossible: ' + (error as Error).message)
@@ -702,14 +744,21 @@ function LoginUser({ onLogin }: { onLogin: (email: string, password: string) => 
 
   return (
     <main className="login-page">
-      <h2>Connexion Client</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit">Se connecter</button>
-      </form>
-      {error && <p className="error-message">{error}</p>}
-      <p>Pas de compte ? <NavLink to="/signup/user">S'inscrire</NavLink></p>
+      <div className="login-card">
+        <div className="login-card-head">
+          <span className="login-badge">Client</span>
+          <h2>Accès Consommateur</h2>
+          <p>Connectez-vous pour commander des produits frais, suivre vos livraisons et gérer vos offres préférées.</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <input type="email" placeholder="Votre adresse email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Votre mot de passe sécurisé" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit">Accéder à Mon Compte</button>
+        </form>
+        <button onClick={handleBiometricLogin} className="biometric-btn">🔐 Connexion Rapide</button>
+        {error && <p className="error-message">{error}</p>}
+        <p className="page-note">Nouveau sur DUGU-SUGU ? <NavLink to="/signup/user">Créer votre compte</NavLink></p>
+      </div>
     </main>
   )
 }
@@ -720,6 +769,39 @@ function LoginSeller({ onLogin }: { onLogin: (email: string, password: string) =
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
+  const handleBiometricLogin = async () => {
+    if (!navigator.credentials) {
+      setError('Authentification biométrique non supportée sur ce navigateur')
+      return
+    }
+    try {
+      // Mock challenge - in real app, get from server
+      const challenge = new Uint8Array(32)
+      window.crypto.getRandomValues(challenge)
+
+      await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [], // Allow any credential
+          userVerification: 'preferred'
+        }
+      })
+
+      // In real app, send credential to server for verification
+      // For demo, assume success and login with stored email
+      const storedEmail = localStorage.getItem('biometricEmail')
+      const storedPassword = localStorage.getItem('biometricPassword')
+      if (storedEmail && storedPassword) {
+        await onLogin(storedEmail, storedPassword)
+        navigate('/home')
+      } else {
+        setError('Aucune authentification biométrique enregistrée')
+      }
+    } catch (error) {
+      setError('Authentification biométrique échouée: ' + (error as Error).message)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!isValidEmail(email)) return setError('Email invalide')
@@ -727,6 +809,9 @@ function LoginSeller({ onLogin }: { onLogin: (email: string, password: string) =
     setError('')
     try {
       await onLogin(email, password)
+      // Store for biometric
+      localStorage.setItem('biometricEmail', email)
+      localStorage.setItem('biometricPassword', password)
       navigate('/home')
     } catch (error) {
       setError('Connexion impossible: ' + (error as Error).message)
@@ -735,14 +820,21 @@ function LoginSeller({ onLogin }: { onLogin: (email: string, password: string) =
 
   return (
     <main className="login-page">
-      <h2>Connexion Vendeur</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit">Se connecter</button>
-      </form>
-      {error && <p className="error-message">{error}</p>}
-      <p>Pas de compte ? <NavLink to="/signup/seller">S'inscrire</NavLink></p>
+      <div className="login-card">
+        <div className="login-card-head">
+          <span className="login-badge">Vendeur</span>
+          <h2>Accès Producteur</h2>
+          <p>Connectez-vous pour gérer vos produits, recevoir des commandes et développer votre clientèle locale.</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <input type="email" placeholder="Votre adresse email professionnelle" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Votre mot de passe sécurisé" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button type="submit">Accéder à Ma Boutique</button>
+        </form>
+        <button onClick={handleBiometricLogin} className="biometric-btn">🔐 Connexion Rapide</button>
+        {error && <p className="error-message">{error}</p>}
+        <p className="page-note">Nouveau producteur ? <NavLink to="/signup/seller">Créer votre boutique</NavLink></p>
+      </div>
     </main>
   )
 }
@@ -754,23 +846,23 @@ function Signup() {
     <main className="signup-page">
       <div className="signup-container">
         <div className="signup-header">
-          <h1>Inscription à DUGU-SUGU</h1>
-          <p>Choisissez votre type de compte pour rejoindre la communauté</p>
+          <h1>Rejoignez Notre Famille Agricole</h1>
+          <p>Créez votre compte et intégrez une communauté dédiée à l'excellence alimentaire</p>
         </div>
 
         <div className="signup-options">
           <div className="signup-option-card" onClick={() => navigate('/signup/user')}>
             <div className="option-icon">👤</div>
-            <h3>S'inscrire en tant que Client</h3>
-            <p>Accédez à des produits frais et locaux</p>
-            <button className="option-btn">Continuer</button>
+            <h3>Acheteur Passionné</h3>
+            <p>Accédez à un univers de saveurs authentiques et de produits d'exception</p>
+            <button className="option-btn">Créer Mon Compte</button>
           </div>
 
           <div className="signup-option-card" onClick={() => navigate('/signup/seller')}>
             <div className="option-icon">🏪</div>
-            <h3>S'inscrire en tant que Vendeur</h3>
-            <p>Présentez vos produits aux consommateurs</p>
-            <button className="option-btn">Continuer</button>
+            <h3>Producteur d'Excellence</h3>
+            <p>Présentez vos créations et développez votre réseau commercial</p>
+            <button className="option-btn">Créer Ma Boutique</button>
           </div>
         </div>
 
@@ -806,17 +898,23 @@ function SignupUser({ onSignup }: { onSignup: (name: string, email: string, pass
 
   return (
     <main className="login-page">
-      <h2>Inscription Client</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Nom complet" value={name} onChange={(e) => setName(e.target.value)} required />
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="tel" placeholder="Numéro de téléphone (+225 XX XX XX XX)" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-        <textarea placeholder="Adresse de livraison" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} required />
-        <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <input type="password" placeholder="Confirmer mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-        <button type="submit">S'inscrire</button>
-      </form>
-      <p>Déjà un compte ? <NavLink to="/login/user">Se connecter</NavLink></p>
+      <div className="login-card">
+        <div className="login-card-head">
+          <span className="login-badge">Client</span>
+          <h2>Inscription Client</h2>
+          <p>Rejoignez le marché des saveurs locales et recevez vos produits directement chez vous.</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <input type="text" placeholder="Nom complet" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="tel" placeholder="Numéro de téléphone (+225 XX XX XX XX)" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          <textarea placeholder="Adresse de livraison" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} required />
+          <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input type="password" placeholder="Confirmer mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          <button type="submit">S'inscrire</button>
+        </form>
+        <p className="page-note">Déjà un compte ? <NavLink to="/login/user">Se connecter</NavLink></p>
+      </div>
     </main>
   )
 }
@@ -845,18 +943,24 @@ function SignupSeller({ onSignup }: { onSignup: (name: string, email: string, pa
 
   return (
     <main className="login-page">
-      <h2>Inscription Vendeur</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="text" placeholder="Nom complet" value={name} onChange={(e) => setName(e.target.value)} required />
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="tel" placeholder="Numéro de téléphone (+225 XX XX XX XX)" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-        <textarea placeholder="Adresse de votre exploitation" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} required />
-        <textarea placeholder="Description de votre exploitation agricole" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} required />
-        <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <input type="password" placeholder="Confirmer mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-        <button type="submit">S'inscrire</button>
-      </form>
-      <p>Déjà un compte ? <NavLink to="/login/seller">Se connecter</NavLink></p>
+      <div className="login-card">
+        <div className="login-card-head">
+          <span className="login-badge">Vendeur</span>
+          <h2>Inscription Vendeur</h2>
+          <p>Créez votre boutique et démarrez la vente directe de vos produits agricoles aux clients de la région.</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <input type="text" placeholder="Nom complet" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="tel" placeholder="Numéro de téléphone (+225 XX XX XX XX)" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          <textarea placeholder="Adresse de votre exploitation" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} required />
+          <textarea placeholder="Description de votre exploitation agricole" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} required />
+          <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input type="password" placeholder="Confirmer mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+          <button type="submit">S'inscrire</button>
+        </form>
+        <p className="page-note">Déjà un compte ? <NavLink to="/login/seller">Se connecter</NavLink></p>
+      </div>
     </main>
   )
 }
@@ -914,7 +1018,7 @@ function Checkout({ cart, user, onOrder, sellerProducts, createOrder }: {
       if (order) {
         alert(`Paiement réussi ! Référence: ${paymentResult.reference}`)
         onOrder()
-        navigate('/profile')
+        navigate('/home')
       } else {
         setError('Erreur lors de la création de la commande')
       }
@@ -1028,7 +1132,7 @@ function Checkout({ cart, user, onOrder, sellerProducts, createOrder }: {
   )
 }
 
-function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, removeSellerProduct }: { user: AppUser | null; sellerProducts: Array<any>; sellerOrders: Array<any>; addSellerProduct: (name: string, category: string, price: number, unit: string) => Promise<void>; removeSellerProduct: (id: string) => Promise<void> }) {
+function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, removeSellerProduct, updateOrderStatus }: { user: AppUser | null; sellerProducts: Array<any>; sellerOrders: Array<any>; addSellerProduct: (name: string, category: string, price: number, unit: string) => Promise<void>; removeSellerProduct: (id: string) => Promise<void>; updateOrderStatus: (orderId: string, status: 'pending' | 'confirmed' | 'shipped' | 'delivered') => Promise<void> }) {
   if (!user?.loggedIn || user.role !== 'seller') {
     return <Navigate to="/login/seller" />
   }
@@ -1047,15 +1151,15 @@ function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, remov
   return (
     <main className="dashboard-page">
       <div className="dashboard-header">
-        <h2>Dashboard Vendeur</h2>
-        <p className="dashboard-subtitle">Gérez vos produits et consultez vos ventes</p>
+        <h2>Dashboard Producteur</h2>
+        <p className="dashboard-subtitle">Gérez votre exploitation agricole et développez votre activité commerciale</p>
       </div>
 
       <div className="dashboard-grid">
         {/* Section Ajout de Produit */}
         <section className="dashboard-card add-product-card">
           <div className="card-header">
-            <h3>➕ Ajouter un Produit</h3>
+            <h3>🌱 Ajouter une Nouvelle Récolte</h3>
           </div>
           <div className="card-content">
             <div className="form-group">
@@ -1116,11 +1220,11 @@ function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, remov
         {/* Section Mes Produits */}
         <section className="dashboard-card products-card">
           <div className="card-header">
-            <h3>📦 Mes Produits ({sellerProducts.length})</h3>
+            <h3>🌾 Mes Récoltes ({sellerProducts.length})</h3>
           </div>
           <div className="card-content">
             {sellerProducts.length === 0 ? (
-              <p className="empty-state">Aucun produit ajouté pour le moment.</p>
+              <p className="empty-state">Aucune récolte disponible. Ajoutez vos premiers produits !</p>
             ) : (
               <div className="products-list">
                 {sellerProducts.map((sp) => (
@@ -1147,11 +1251,11 @@ function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, remov
         {/* Section Commandes */}
         <section className="dashboard-card orders-card">
           <div className="card-header">
-            <h3>📋 Commandes Reçues ({sellerOrders.length})</h3>
+            <h3>� Commandes Clients ({sellerOrders.length})</h3>
           </div>
           <div className="card-content">
             {sellerOrders.length === 0 ? (
-              <p className="empty-state">Aucune commande trouvée pour vos produits.</p>
+              <p className="empty-state">Vos clients n'ont pas encore passé de commande. Continuez à présenter vos excellents produits !</p>
             ) : (
               <div className="orders-container">
                 {sellerOrders.map((order) => (
@@ -1186,6 +1290,33 @@ function Dashboard({ user, sellerProducts, sellerOrders, addSellerProduct, remov
                             </li>
                           ))}
                         </ul>
+                      </div>
+
+                      <div className="order-actions">
+                        {order.status === 'pending' && (
+                          <button
+                            className="btn-primary btn-small"
+                            onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                          >
+                            Confirmer la commande
+                          </button>
+                        )}
+                        {order.status === 'confirmed' && (
+                          <button
+                            className="btn-secondary btn-small"
+                            onClick={() => updateOrderStatus(order.id, 'shipped')}
+                          >
+                            Marquer comme expédié
+                          </button>
+                        )}
+                        {order.status === 'shipped' && (
+                          <button
+                            className="btn-success btn-small"
+                            onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          >
+                            Marquer comme livré
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1261,28 +1392,28 @@ function Profile({ user, onLogout }: { user: AppUser | null; onLogout: () => voi
       <main className="profile-page">
         <div className="profile-container">
           <div className="profile-header">
-            <h2>Connexion Requise</h2>
-            <p>Sélectionnez votre type de compte pour accéder à toutes les fonctionnalités</p>
+            <h2>Authentification Nécessaire</h2>
+            <p>Connectez-vous pour découvrir toutes les fonctionnalités de notre plateforme agricole</p>
           </div>
 
           <div className="profile-options">
             <div className="option-card" onClick={() => navigate('/login/user')}>
               <div className="option-icon">👤</div>
-              <h3>Client</h3>
-              <p>Achetez des produits frais directement auprès des agriculteurs locaux</p>
-              <button className="option-btn">Se connecter</button>
+              <h3>Consommateur</h3>
+              <p>Découvrez et commandez des produits frais issus de l'agriculture durable</p>
+              <button className="option-btn">Accéder au Marché</button>
             </div>
 
             <div className="option-card" onClick={() => navigate('/login/seller')}>
               <div className="option-icon">🏪</div>
-              <h3>Vendeur</h3>
-              <p>Gérez vos produits et vendez directement à vos clients</p>
-              <button className="option-btn">Se connecter</button>
+              <h3>Producteur</h3>
+              <p>Gérez votre exploitation et développez votre activité commerciale</p>
+              <button className="option-btn">Gérer Ma Boutique</button>
             </div>
           </div>
 
           <div className="profile-footer">
-            <p>Pas encore de compte ? <NavLink to="/signup/user">S'inscrire en tant que client</NavLink> ou <NavLink to="/signup/seller">vendeur</NavLink></p>
+            <p>Nouveau sur DUGU-SUGU ? <NavLink to="/signup/user">Rejoignez-nous en tant que consommateur</NavLink> ou <NavLink to="/signup/seller">devenez producteur</NavLink></p>
           </div>
         </div>
       </main>
@@ -1466,15 +1597,20 @@ function Profile({ user, onLogout }: { user: AppUser | null; onLogout: () => voi
   )
 }
 
-function SellerDirectory({ sellers, products }: { sellers: Seller[]; products: Product[] }) {
+function SellerDirectory({ sellers, products, currentUser, addToCart }: { sellers: Seller[]; products: Product[]; currentUser: AppUser | null; addToCart: (productId: string) => void }) {
   const [selectedSellerId, setSelectedSellerId] = useState<string>('')
+  const navigate = useNavigate()
 
   const selectedSeller = sellers.find((seller) => seller.id === selectedSellerId)
 
   const filteredProducts = useMemo(() => {
-    if (!selectedSellerId) return []
-    return products.filter((product) => product.sellerId === selectedSellerId)
-  }, [products, selectedSellerId])
+    if (!selectedSellerId || !selectedSeller) return []
+    return products.filter((product) =>
+      product.sellerId === selectedSellerId ||
+      (product as any).owner === selectedSellerId ||
+      product.sellerName === selectedSeller.name
+    )
+  }, [products, selectedSellerId, selectedSeller])
 
   // Fonction pour obtenir une couleur unique pour chaque vendeur
   const getSellerColor = (sellerId: string) => {
@@ -1508,7 +1644,7 @@ function SellerDirectory({ sellers, products }: { sellers: Seller[]; products: P
         <div className="header-content">
           <span className="header-icon">🌟</span>
           <h2>Rencontrez Nos Producteurs</h2>
-          <p>Découvrez les visages derrière nos produits frais et locaux</p>
+          <p>Rencontrez les artisans passionnés qui cultivent l'excellence agricole malienne</p>
         </div>
       </div>
 
@@ -1533,7 +1669,11 @@ function SellerDirectory({ sellers, products }: { sellers: Seller[]; products: P
               <div className="vendor-stats">
                 <span className="stat">
                   <span className="stat-icon">📦</span>
-                  {products.filter(p => p.sellerId === seller.id).length} produits
+                  {products.filter((product) =>
+                    product.sellerId === seller.id ||
+                    (product as any).owner === seller.id ||
+                    product.sellerName === seller.name
+                  ).length} produits
                 </span>
               </div>
             </div>
@@ -1578,6 +1718,27 @@ function SellerDirectory({ sellers, products }: { sellers: Seller[]; products: P
                     <p className="price">{product.price.toLocaleString()} FCFA / {product.unit}</p>
                     <div className="product-actions">
                       <span className="availability-badge">✅ Disponible</span>
+                      <button
+                        type="button"
+                        className="add-to-cart-btn seller-add-to-cart"
+                        onClick={() => {
+                          if (!currentUser?.loggedIn) {
+                            alert('Vous devez être connecté(e) en tant que client pour ajouter des produits au panier.')
+                            navigate('/login/user')
+                            return
+                          }
+                          if (currentUser.role !== 'user') {
+                            const goToUserLogin = window.confirm('Vous êtes connecté(e) en tant que vendeur. Voulez-vous vous reconnecter en tant que client pour ajouter au panier ?')
+                            if (goToUserLogin) {
+                              navigate('/login/user')
+                            }
+                            return
+                          }
+                          addToCart(product.id.toString())
+                        }}
+                      >
+                        Ajouter au panier
+                      </button>
                     </div>
                   </div>
                 </article>
@@ -1609,6 +1770,7 @@ function App() {
   const [sellerProducts, setSellerProducts] = useState<Array<any>>([])
   const [sellerOrders, setSellerOrders] = useState<Array<any>>([])
   const [allSellerProducts, setAllSellerProducts] = useState<Array<any>>([])
+  const [realSellers, setRealSellers] = useState<Seller[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [notification, setNotification] = useState('')
@@ -1649,10 +1811,32 @@ function App() {
     loadAllSellerProducts()
   }, [])
 
+  // Charger les vendeurs réels depuis la DB
   useEffect(() => {
-    const fetchSellerData = async () => {
-      if (!currentUser || currentUser.role !== 'seller') return
+    const loadRealSellers = async () => {
+      try {
+        const profilesQuery = collection(db, 'profiles')
+        const profilesSnapshot = await getDocs(profilesQuery)
+        const sellersList = profilesSnapshot.docs
+          .filter((docu) => docu.data().role === 'seller' && docu.data().name !== 'BBB')
+          .map((docu) => ({
+            id: docu.id,
+            name: docu.data().email === 'issiakakone9290@gmail.com' ? 'Sanfo' : (docu.data().name || docu.data().email || 'Vendeur'),
+            location: docu.data().address || 'Mali',
+            bio: docu.data().bio || 'Producteur agricole'
+          }))
+        setRealSellers(sellersList)
+      } catch (error) {
+        console.error('Erreur chargement vendeurs:', error)
+      }
+    }
+    loadRealSellers()
+  }, [currentUser])
 
+  useEffect(() => {
+    if (!currentUser || currentUser.role !== 'seller') return
+
+    const fetchSellerData = async () => {
       const productsQuery = collection(db, 'sellerProducts')
       const productsSnapshot = await getDocs(productsQuery)
       const sellerList = productsSnapshot.docs
@@ -1660,32 +1844,105 @@ function App() {
         .map((docu) => ({ id: docu.id, ...docu.data() }))
       setSellerProducts(sellerList)
 
+      const updateOrders = (ordersSnapshot: any) => {
+        const ordersList = ordersSnapshot.docs
+          .filter((docu: any) => docu.data().items?.some((item: any) => sellerList.some((p) => p.id === item.productId)))
+          .map((docu: any) => ({ id: docu.id, ...docu.data() }))
+        setSellerOrders(ordersList)
+      }
+
       const ordersQuery = collection(db, 'orders')
       const ordersSnapshot = await getDocs(ordersQuery)
-      const ordersList = ordersSnapshot.docs
-        .filter((docu) => docu.data().items?.some((item: any) => sellerList.some((p) => p.id === item.id)))
-        .map((docu) => ({ id: docu.id, ...docu.data() }))
-      setSellerOrders(ordersList)
+      updateOrders(ordersSnapshot)
+
+      // Écouter les changements en temps réel pour les commandes
+      const unsubscribeOrders = onSnapshot(ordersQuery, updateOrders, (error) => {
+        console.error('Erreur écoute commandes:', error)
+      })
+
+      return unsubscribeOrders
     }
-    fetchSellerData()
+
+    let unsubscribe: (() => void) | undefined
+    fetchSellerData().then((unsub) => {
+      unsubscribe = unsub
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [currentUser])
+
+  // Initialiser des produits par défaut pour le vendeur Sanfo
+  useEffect(() => {
+    const initializeDefaultProducts = async () => {
+      if (!currentUser || currentUser.role !== 'seller' || currentUser.email !== 'issiakakone9290@gmail.com') return
+
+      const productsQuery = collection(db, 'sellerProducts')
+      const productsSnapshot = await getDocs(productsQuery)
+      const existingProducts = productsSnapshot.docs.filter((docu) => docu.data().owner === currentUser.uid)
+
+      if (existingProducts.length === 0) {
+        // Ajouter des produits par défaut
+        const defaultProducts = [
+          { name: 'Tomates Bio Sanfo', category: 'Légumes', price: 1500, unit: 'kg' },
+          { name: 'Mangues Fraîches', category: 'Fruits', price: 2000, unit: 'kg' },
+          { name: 'Riz Blanc', category: 'Céréales', price: 900, unit: 'kg' },
+          { name: 'Huile d\'Arachide', category: 'Boissons', price: 2500, unit: 'litre' },
+          { name: 'Carottes Organiques', category: 'Légumes', price: 1000, unit: 'kg' }
+        ]
+
+        for (const product of defaultProducts) {
+          await addDoc(collection(db, 'sellerProducts'), {
+            owner: currentUser.uid,
+            ...product,
+            createdAt: new Date().toISOString()
+          })
+        }
+
+        // Recharger les produits
+        const updatedSnapshot = await getDocs(productsQuery)
+        const sellerList = updatedSnapshot.docs
+          .filter((docu) => docu.data().owner === currentUser.uid)
+          .map((docu) => ({ id: docu.id, ...docu.data() }))
+        setSellerProducts(sellerList)
+      }
+    }
+    initializeDefaultProducts()
   }, [currentUser])
 
   // Charger les notifications
   useEffect(() => {
-    if (currentUser?.uid) {
-      const loadNotifications = async () => {
-        try {
-          const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', currentUser.uid))
-          const snapshot = await getDocs(notificationsQuery)
-          const userNotifications = snapshot.docs.map(doc => ({ ...doc.data() } as Notification))
-          setNotifications(userNotifications)
-        } catch (error) {
-          console.error('Erreur chargement notifications:', error)
-        }
+    if (!currentUser?.uid) return
+
+    const loadNotifications = async () => {
+      try {
+        const notificationsQuery = query(collection(db, 'notifications'), where('userId', '==', currentUser.uid))
+        const snapshot = await getDocs(notificationsQuery)
+        const userNotifications = snapshot.docs.map(doc => ({ ...doc.data() } as Notification))
+        setNotifications(userNotifications)
+      } catch (error) {
+        console.error('Erreur chargement notifications:', error)
       }
-      loadNotifications()
     }
-  }, [currentUser])
+
+    // Charger initialement
+    loadNotifications()
+
+    // Écouter les changements en temps réel
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'notifications'), where('userId', '==', currentUser.uid)),
+      (snapshot) => {
+        const userNotifications = snapshot.docs.map(doc => ({ ...doc.data() } as Notification))
+        setNotifications(userNotifications)
+      },
+      (error) => {
+        console.error('Erreur écoute notifications:', error)
+      }
+    )
+
+    return unsubscribe
+  }, [currentUser?.uid])
 
   // Charger l'historique des commandes
   useEffect(() => {
@@ -1776,6 +2033,19 @@ function App() {
     setSellerProducts((current) => current.filter((item) => item.id !== id))
   }
 
+  const updateOrderStatus = async (orderId: string, status: 'pending' | 'confirmed' | 'shipped' | 'delivered') => {
+    try {
+      await setDoc(doc(db, 'orders', orderId), { status }, { merge: true })
+      setSellerOrders(prev => prev.map(order =>
+        order.id === orderId ? { ...order, status } : order
+      ))
+      alert(`Commande ${status === 'confirmed' ? 'confirmée' : status === 'shipped' ? 'expédiée' : 'livrée'} avec succès !`)
+    } catch (error) {
+      console.error('Erreur mise à jour statut:', error)
+      alert('Erreur lors de la mise à jour du statut')
+    }
+  }
+
   const clearCart = () => setCart({})
 
   const addNotification = async (notification: Omit<Notification, 'id'>) => {
@@ -1811,8 +2081,8 @@ function App() {
       if (!product) {
         product = allSellerProducts.find((p) => p.id === id)
       }
-      return product ? { productId: id, quantity: qty, price: product.price } : null
-    }).filter(Boolean) as Array<{ productId: string; quantity: number; price: number }>
+      return product ? { productId: id, name: product.name, quantity: qty, price: product.price } : null
+    }).filter(Boolean) as Array<{ productId: string; name: string; quantity: number; price: number }>
 
     const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
@@ -1854,27 +2124,31 @@ function App() {
     }
   }
 
+  const isAuthenticated = currentUser?.loggedIn
+
   return (
     <div className="app-container">
       {notification && <div className="notification-banner">{notification}</div>}
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login/user" element={<LoginUser onLogin={handleLogin} />} />
-        <Route path="/login/seller" element={<LoginSeller onLogin={handleLogin} />} />
-        <Route path="/signup/user" element={<SignupUser onSignup={(n, e, p, ph, a) => handleSignup(n, e, p, ph, a, '', 'user')} />} />
-        <Route path="/signup/seller" element={<SignupSeller onSignup={(n, e, p, ph, a, b) => handleSignup(n, e, p, ph, a, b, 'seller')} />} />
-        <Route path="/home" element={<ProtectedRoute user={currentUser}><Home cart={cart} addToCart={addToCart} sellerProducts={allSellerProducts} currentUser={currentUser} /></ProtectedRoute>} />
-        <Route path="/cart" element={<ProtectedRoute user={currentUser}><Cart cart={cart} updateQuantity={updateQuantity} user={currentUser} sellerProducts={allSellerProducts} /></ProtectedRoute>} />
-        <Route path="/checkout" element={<ProtectedRoute user={currentUser}><Checkout cart={cart} user={currentUser} onOrder={clearCart} sellerProducts={allSellerProducts} createOrder={createOrder} /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute user={currentUser}><Dashboard user={currentUser} sellerProducts={sellerProducts} sellerOrders={sellerOrders} addSellerProduct={addSellerProduct} removeSellerProduct={removeSellerProduct} /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute user={currentUser}><Profile user={currentUser} onLogout={handleLogout} /></ProtectedRoute>} />
-        <Route path="/sellers" element={<ProtectedRoute user={currentUser}><SellerDirectory sellers={sellers} products={[...productsWithSeller, ...allSellerProducts]} /></ProtectedRoute>} />
-        <Route path="/notifications" element={<ProtectedRoute user={currentUser}><Notifications notifications={notifications} markAsRead={markNotificationAsRead} /></ProtectedRoute>} />
-        <Route path="/orders" element={<ProtectedRoute user={currentUser}><OrderHistory orders={orders} /></ProtectedRoute>} />
-      </Routes>
-      {currentUser?.loggedIn && (
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login/user" element={<LoginUser onLogin={handleLogin} />} />
+          <Route path="/login/seller" element={<LoginSeller onLogin={handleLogin} />} />
+          <Route path="/signup/user" element={<SignupUser onSignup={(n, e, p, ph, a) => handleSignup(n, e, p, ph, a, '', 'user')} />} />
+          <Route path="/signup/seller" element={<SignupSeller onSignup={(n, e, p, ph, a, b) => handleSignup(n, e, p, ph, a, b, 'seller')} />} />
+          <Route path="/home" element={<ProtectedRoute user={currentUser}><Home cart={cart} addToCart={addToCart} sellerProducts={allSellerProducts} currentUser={currentUser} /></ProtectedRoute>} />
+          <Route path="/cart" element={<ProtectedRoute user={currentUser}><Cart cart={cart} updateQuantity={updateQuantity} user={currentUser} sellerProducts={allSellerProducts} /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute user={currentUser}><Checkout cart={cart} user={currentUser} onOrder={clearCart} sellerProducts={allSellerProducts} createOrder={createOrder} /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute user={currentUser}><Dashboard user={currentUser} sellerProducts={sellerProducts} sellerOrders={sellerOrders} addSellerProduct={addSellerProduct} removeSellerProduct={removeSellerProduct} updateOrderStatus={updateOrderStatus} /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute user={currentUser}><Profile user={currentUser} onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/sellers" element={<ProtectedRoute user={currentUser}><SellerDirectory sellers={[...sellers, ...realSellers]} products={[...productsWithSeller, ...allSellerProducts]} currentUser={currentUser} addToCart={addToCart} /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute user={currentUser}><Notifications notifications={notifications} markAsRead={markNotificationAsRead} /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute user={currentUser}><OrderHistory orders={orders} /></ProtectedRoute>} />
+        </Routes>
+      </div>
+      {isAuthenticated && (
         <footer className="bottom-nav">
           <NavLink to="/home" className="nav-link">
             <span className="nav-icon">🏠</span>
@@ -1886,7 +2160,7 @@ function App() {
             {Object.keys(cart).length > 0 && <span className="cart-badge">{Object.keys(cart).length}</span>}
           </NavLink>
           <NavLink to="/sellers" className="nav-link">
-            <span className="nav-icon">🏷️</span>
+            <span className="nav-icon">🏬</span>
             <span>Vendeurs</span>
           </NavLink>
           <NavLink to="/notifications" className="nav-link">

@@ -13,7 +13,6 @@ const firebaseConfig = {
   measurementId: "G-356NMTNPDG"
 }
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
 // Initialize services
@@ -21,7 +20,6 @@ export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const messaging = getMessaging(app)
 
-// Request permission for notifications
 export const requestNotificationPermission = async () => {
   try {
     const permission = await Notification.requestPermission()
